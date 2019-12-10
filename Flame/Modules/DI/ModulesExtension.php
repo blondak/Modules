@@ -229,7 +229,7 @@ class ModulesExtension extends Nette\DI\CompilerExtension
 		$router = $builder->getDefinition('router');
 
 		/** @var Nette\DI\CompilerExtension $extension */
-		$name = $this->addRouteService($extension->getReflection()->name);
+		$name = $this->addRouteService((new \ReflectionClass($extension))->name);
 		$router->addSetup('offsetSet', array(NULL, $name));
 	}
 
@@ -243,7 +243,7 @@ class ModulesExtension extends Nette\DI\CompilerExtension
 		$builder = $this->getContainerBuilder();
 
 		$builder->addDefinition($this->prefix('routeService.' . $serviceName))
-			->setClass($class)
+			->setType($class)
 			->setInject(TRUE);
 
 		$builder->addDefinition('routerServiceFactory.' . $serviceName)
@@ -321,7 +321,9 @@ class ModulesExtension extends Nette\DI\CompilerExtension
 				// ...and by service name...
 				foreach($items as $serviceName) {
 					$factory = new Nette\DI\Statement(array('@' . $serviceName, 'createRouter'));
-					$router->addSetup('offsetSet', array(NULL, $factory));
+					$router
+    					->addSetup('Flame\Modules\Application\RouterFactory::prependTo($service, ?)', [$factory]);
+					//$router->addSetup('offsetSet', array(NULL, $factory));
 				}
 			}
 		}

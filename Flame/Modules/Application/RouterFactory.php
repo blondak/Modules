@@ -29,7 +29,7 @@ class RouterFactory
 	 * @throws \Nette\InvalidStateException
 	 * @throws \Nette\Utils\AssertionException
 	 */
-	public static function prependTo(Nette\Application\IRouter &$router, array $routes)
+	public static function prependTo(Nette\Application\IRouter &$router, $extensionRoute)
 	{
 		if (!$router instanceof RouteList) {
 			throw new Nette\Utils\AssertionException(
@@ -38,19 +38,19 @@ class RouterFactory
 			);
 		}
 
-		if (count($routes)) {
-			$definedRoutes = array_merge($routes, iterator_to_array($router));
-			$router = new RouteList;
+		// Add extension route to router
+		$router[] = $extensionRoute;
 
-			foreach ($definedRoutes as $route) {
-				if ($route instanceof Nette\Application\IRouter && !$route instanceof IRouteMock) {
-					$router[] = $route;
-				} elseif ($route instanceof IRouteMock) {
-					$router[] = $route->getRouter();
-				} else {
-					throw new InvalidStateException('Route definition must be array or instance of Flame\Modules\Application\Routers\IRouteMock, ' . gettype($route) . ' given');
-				}
-			}
+		$lastKey = count($router) - 1;
+
+		foreach ($router as $i => $route) {
+		    if ($i === $lastKey) {
+		        break;
+		    }
+
+		    $router[$i+1] = $route;
 		}
+
+		$router[0] = $extensionRoute;
 	}
 }

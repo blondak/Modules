@@ -4,13 +4,14 @@
  */
 namespace Flame\Modules\Configurators;
 
-use Nette\Object;
+use Nette\SmartObject;
 
-abstract class Config extends Object
+abstract class Config
 {
+    use SmartObject;
 
 	/**
 	 * @return mixed
 	 */
 	abstract public function getConfiguration();
-} 
+}
