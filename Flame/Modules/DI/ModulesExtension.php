@@ -25,6 +25,9 @@ use Flame\Modules\Providers\ITracyPanelsProvider;
 use Nette;
 use Nette\DI\ServiceDefinition;
 use Nette\Utils\Validators;
+use Nette\Application\Routers\RouteList;
+use Nette\Application\Router;
+use Nette\Application\Routers\Route;
 
 
 class ModulesExtension extends Nette\DI\CompilerExtension
@@ -299,33 +302,38 @@ class ModulesExtension extends Nette\DI\CompilerExtension
 		$routerFactories = array();
 
 		foreach ($builder->findByTag(self::TAG_ROUTER) as $serviceName => $priority) {
-			// Priority is not defined...
 			if (is_bool($priority)) {
-				// ...use default value
 				$priority = 100;
 			}
-
 			$routerFactories[$priority][$serviceName] = $serviceName;
 		}
 
-		// Sort routes by priority
 		if (!empty($routerFactories)) {
 			krsort($routerFactories, SORT_NUMERIC);
-
 			foreach ($routerFactories as $priority => $items) {
 				$routerFactories[$priority] = $items;
 			}
+			$routerServiceName = $builder->getByType(Router::class) ?: 'router';
+			$routerDefinition = $builder->getDefinition($routerServiceName);
+			$routerDefinition->setAutowired(FALSE);
 
-			// Process all routes services by priority...
+			$builder->addDefinition($this->prefix($routerServiceName), clone $routerDefinition);
+
+			$builder->removeDefinition($routerServiceName);
+
+			$routerDefinition = $builder->addDefinition($routerServiceName)
+			    ->setType(RouteList::class)
+			;
 			foreach ($routerFactories as $priority => $items) {
-				// ...and by service name...
 				foreach($items as $serviceName) {
-					$factory = new Nette\DI\Statement(array('@' . $serviceName, 'createRouter'));
-					$router
-    					->addSetup('Flame\Modules\Application\RouterFactory::prependTo($service, ?)', [$factory]);
-					//$router->addSetup('offsetSet', array(NULL, $factory));
+					$factory = new Nette\DI\Definitions\Statement(array('@' . $serviceName, 'createRouter'));
+					$routerDefinition->addSetup('offsetSet', [null, $factory]);
 				}
 			}
+
+			$routerDefinition
+			    ->addSetup('offsetSet', [null, $this->prefix('@'.$routerServiceName)]);
+			;
 		}
 	}
 }
