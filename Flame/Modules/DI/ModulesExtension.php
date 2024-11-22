@@ -315,25 +315,13 @@ class ModulesExtension extends Nette\DI\CompilerExtension
 			}
 			$routerServiceName = $builder->getByType(Router::class) ?: 'router';
 			$routerDefinition = $builder->getDefinition($routerServiceName);
-			$routerDefinition->setAutowired(FALSE);
 
-			$builder->addDefinition($this->prefix($routerServiceName), clone $routerDefinition);
-
-			$builder->removeDefinition($routerServiceName);
-
-			$routerDefinition = $builder->addDefinition($routerServiceName)
-			    ->setType(RouteList::class)
-			;
 			foreach ($routerFactories as $priority => $items) {
 				foreach($items as $serviceName) {
 					$factory = new Nette\DI\Definitions\Statement(array('@' . $serviceName, 'createRouter'));
-					$routerDefinition->addSetup('offsetSet', [null, $factory]);
+					$routerDefinition->addSetup('prepend', [$factory]);
 				}
 			}
-
-			$routerDefinition
-			    ->addSetup('offsetSet', [null, $this->prefix('@'.$routerServiceName)]);
-			;
 		}
 	}
 }
