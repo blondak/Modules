@@ -320,10 +320,8 @@ class ModulesExtension extends Nette\DI\CompilerExtension
 			foreach ($routerFactories as $priority => $items) {
 				// ...and by service name...
 				foreach($items as $serviceName) {
-					$factory = new Nette\DI\Statement(array('@' . $serviceName, 'createRouter'));
-					$router
-    					->addSetup('Flame\Modules\Application\RouterFactory::prependTo($service, ?)', [$factory]);
-					//$router->addSetup('offsetSet', array(NULL, $factory));
+					$factory = new Nette\DI\Definitions\Statement(array('@' . $serviceName, 'createRouter'));
+					$router->addSetup('prepend', [$factory]);
 				}
 			}
 		}
